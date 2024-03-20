@@ -5,9 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    # mount the current directory to /home/scoped/notebooks
-    #entrypoint:
-    #  - tini -s -g -- /entry.sh /usr/bin/startup.sh
   pypaw:
     build:
       context: .
@@ -15,4 +12,4 @@ services:
     ports:
       - "8888:8888" # modify to 8888:8889 or another if 8888 is already in use
     volumes:
-      - ./notebooks:/home/scoped/notebooks
+      - ./notebooks:/home/jovyan/notebooks

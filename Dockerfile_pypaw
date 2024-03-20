@@ -1,34 +1,47 @@
 # base image which includes intel mpi/conda/jupyterla
-FROM ghcr.io/seisscoped/container-base:centos7
+#FROM ghcr.io/seisscoped/container-base:centos7
 
-#RUN yum install -y cmake3 boost-devel \
-#    && ln -s /bin/cmake3 /bin/cmake
+# use ubuntu20 with intel mpi/conda/jupyterlab
+FROM jupyter/scipy-notebook:latest
 
 # go to /home/scoped
-WORKDIR /home/scoped
+WORKDIR /home/jovyan
 
-# install parallel HDF5 with yum
-RUN yum install -y hdf5-mpich
+# change user to root
+USER root
 
-#
-## install pypaw with conda env
+# install parallel HDF5 with apt
+#RUN yum install -y openmpi-devel openmpi3-devel hdf5-openmpi-devel
+RUN apt update && apt install -y libhdf5-openmpi-dev
+
+# change back to user to jovyan
+USER jovyan
+
+# add conda to PATH
+ENV PATH=$PATH:/opt/conda/bin
+
+# install pypaw with conda env
 RUN conda init bash \
     && . ~/.bashrc \
     && git clone --branch py3_add_project_function https://github.com/mnagaso/pypaw.git \
     && cd pypaw \
-    && conda env create -f environment.yml \
-    && conda activate pypaw \
+    && conda env create -f environment.yml
+
+# Make RUN commands use the new environment:
+SHELL ["conda", "run", "-n", "pypaw", "/bin/bash", "-c"]
+
+
+RUN /bin/bash -c "source activate pypaw" \
+    && cd pypaw \
     && CC=mpicc pip install --no-binary=mpi4py mpi4py \
-    #&& rm -rf ./h5py && git clone https://github.com/h5py/h5py.git && cd h5py && HDF5_MPI=ON CC=mpicc pip install . && cd .. && rm -rf h5py \
-    && CC=mpicc pip install --no-binary=h5py h5py \
+    && pip uninstall -y h5py && git clone https://github.com/h5py/h5py.git && cd h5py && HDF5_MPI=ON HDF5_DIR=/usr/lib/x86_64-linux-gnu/hdf5/openmpi/ CC=mpicc pip install . && cd .. && rm -rf h5py \
     && pip install . \
     && cd ../
 
 # install ipykernel for pyenv
-RUN conda init bash \
-    && . ~/.bashrc \
-    && conda activate pypaw \
+RUN /bin/bash -c "source activate pypaw" \
     && conda install -y ipykernel \
-    && python -m ipykernel install --user --name=pypaw_ipykernel
+    && python -m ipykernel install --user --name=pypaw
 
-
+# erase the work directory
+RUN rm -rf work
