@@ -4,7 +4,8 @@ services:
   spec:
     build:
       context: .
-      dockerfile: Dockerfile
+      #dockerfile: Dockerfile_spec_ubuntu
+      dockerfile: Dockerfile_spec_frontera
   pypaw:
     build:
       context: .

@@ -1,0 +1,1 @@
+docker run -v $PWD:/mnt/out --rm -ti scoped_workshop-spec /bin/cp -r ./* /mnt/out/
